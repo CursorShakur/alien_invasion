@@ -100,7 +100,7 @@ class EnemyWave:
     def _change_fleet_direction(self):
         """Drop the entire fleet and change the fleet's direction."""
         for alien in self.aliens.sprites():
-            alien.rect.y += 10
+            alien.rect.y += self.settings.enemy_drop_speed  # Use the new drop speed setting
         self.fleet_direction *= -1
         
     def update(self):
@@ -111,5 +111,10 @@ class EnemyWave:
     def spawn_enemies(self):
         """Spawn a new wave of enemies."""
         self.wave_number += 1
+        # Increase enemy speed slightly with each wave, but cap it
+        self.settings.enemy_speed = min(
+            self.settings.enemy_speed * 1.1,  # Increase by 10% each wave
+            2.0  # Maximum speed cap
+        )
         self.create_fleet()
         return self.wave_number 

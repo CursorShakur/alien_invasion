@@ -12,9 +12,11 @@ class Settings:
         self.player_beam_speed = 10
         self.player_beam_width = 3
         self.player_beam_color = (0, 255, 0)  # Green beam
+        self.auto_fire_delay = 100  # Delay between auto-shots in milliseconds
         
         # Enemy settings
-        self.enemy_speed = 2
+        self.enemy_speed = 1  # Reduced from 2 to 1
+        self.enemy_drop_speed = 5  # New setting for vertical movement
         self.enemy_health = 20
         self.enemy_points = 50  # Points earned for destroying an enemy
         self.wave_increment = 5  # Number of additional enemies per wave

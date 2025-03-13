@@ -28,6 +28,9 @@ class Player:
         self.health = settings.player_health
         self.gems = settings.initial_gems
         
+        # Auto-shooting attributes
+        self.last_shot_time = pygame.time.get_ticks()
+        
     def update(self):
         """Update the player's position based on movement flags."""
         # Update the player's center value, not the rect
@@ -47,6 +50,14 @@ class Player:
         """Create a new beam and add it to the beams group."""
         from weapons import Beam
         return Beam(self.settings, self.screen, self)
+        
+    def should_auto_fire(self):
+        """Check if enough time has passed to fire another shot."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_shot_time > self.settings.auto_fire_delay:
+            self.last_shot_time = current_time
+            return True
+        return False
         
     def reset_position(self):
         """Center the player on the screen."""

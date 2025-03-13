@@ -9,16 +9,13 @@ class CollisionHandler:
         """Check for collisions between beams and aliens."""
         # Check for any beams that have hit aliens
         # If so, get rid of the beam and the alien
-        collisions = pygame.sprite.groupcollide(beams, aliens, True, False)
+        collisions = pygame.sprite.groupcollide(beams, aliens, True, True)
         
-        # Process collisions
+        # Award points for destroyed aliens
         if collisions:
             for aliens_hit in collisions.values():
-                for alien in aliens_hit:
-                    # Apply damage to the alien
-                    if alien.take_damage(10):  # If alien is destroyed
-                        alien.kill()
-                        player.gems += 50  # Award gems for destroying an alien
+                for _ in aliens_hit:  # No need to check health since we're destroying them immediately
+                    player.gems += 50  # Award gems for destroying an alien
                         
         return collisions
 

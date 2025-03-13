@@ -12,25 +12,27 @@ class InputHandler:
             if event.type == pygame.QUIT:
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                InputHandler._handle_keydown_events(event, player, beams)
+                InputHandler._handle_keydown_events(event, player)
             elif event.type == pygame.KEYUP:
                 InputHandler._handle_keyup_events(event, player)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 return ui.check_button(mouse_pos)
+        
+        # Check for auto-firing
+        if player.should_auto_fire():
+            new_beam = player.fire_beam()
+            beams.add(new_beam)
+            
         return None
 
     @staticmethod
-    def _handle_keydown_events(event, player, beams):
+    def _handle_keydown_events(event, player):
         """Respond to key presses."""
         if event.key == pygame.K_RIGHT:
             player.moving_right = True
         elif event.key == pygame.K_LEFT:
             player.moving_left = True
-        elif event.key == pygame.K_SPACE:
-            # Fire a beam
-            new_beam = player.fire_beam()
-            beams.add(new_beam)
         elif event.key == pygame.K_q:
             sys.exit()
 
