@@ -10,7 +10,11 @@ from enemies import EnemyWave
 from resources import ResourceManager
 from story import Story
 from ui import UI
-import utils
+from input_handler import InputHandler
+from renderer import Renderer
+from collision_handler import CollisionHandler
+from visual_effects import StarfieldGenerator
+from game_state import GameStateManager
 
 def run_game():
     print("Starting game initialization...")
@@ -23,103 +27,80 @@ def run_game():
     pygame.display.set_caption("Alien Invasion")
     print("Created display...")
     
-    # Create game objects
-    player = Player(settings, screen)
-    base = Base(settings, screen)
-    enemy_wave = EnemyWave(settings, screen)
-    resource_manager = ResourceManager(settings)
-    story = Story()
+    # Create game state manager
+    game_state_manager = GameStateManager(settings, screen)
+    
+    # Create UI
     ui = UI(settings, screen)
     print("Created game objects...")
     
-    # Set up pygame sprite groups
-    beams = Group()
+    # Create handlers
+    input_handler = InputHandler()
+    renderer = Renderer()
+    collision_handler = CollisionHandler()
     
     # Create a starfield background
-    stars = utils.create_stars(settings, screen, 100)
+    starfield_generator = StarfieldGenerator()
+    stars = starfield_generator.create_stars(settings, screen, 100)
     print("Created starfield...")
     
-    # Set the game state
-    game_state = "menu"
+    # Set up game clock
     clock = pygame.time.Clock()
     print("Starting main game loop...")
     
     # Start the main game loop
     while True:
         # Check for events
-        action = utils.check_events(player, ui, beams)
+        action = input_handler.handle_events(game_state_manager.player, ui, game_state_manager.beams)
         
         # Process UI actions
-        if action == "start_game":
-            print("Starting new game...")
-            game_state = "playing"
-            # Initialize game objects for a new game
-            player = Player(settings, screen)
-            base = Base(settings, screen)
-            enemy_wave = EnemyWave(settings, screen)
-            enemy_wave.create_fleet()
-            resource_manager = ResourceManager(settings)
-            beams = Group()
-        elif action == "exit_game":
+        result = game_state_manager.handle_action(action)
+        if result == "exit":
             print("Exiting game...")
             sys.exit()
-        elif action == "restart_game":
-            print("Restarting game...")
-            game_state = "playing"
-            # Reset game objects
-            player = Player(settings, screen)
-            base = Base(settings, screen)
-            enemy_wave = EnemyWave(settings, screen)
-            enemy_wave.create_fleet()
-            resource_manager = ResourceManager(settings)
-            beams = Group()
-        elif action == "upgrade_defense":
-            if game_state == "playing":
-                print("Upgrading defense...")
-                base.upgrade_defense(resource_manager)
         
-        # Update game objects if the game is active
-        if game_state == "playing":
-            # Update player
-            player.update()
+        # Update based on current game state
+        current_state = game_state_manager.get_state()
+        
+        if current_state == "playing":
+            # Update game objects
+            game_state_manager.update_playing_state()
             
-            # Update beams
-            beams.update()
-            
-            # Remove beams that have gone off the top of the screen
-            for beam in beams.copy():
-                if beam.rect.bottom <= 0:
-                    beams.remove(beam)
-            
-            # Update aliens
-            enemy_wave.update()
+            # Update stars
+            stars = starfield_generator.update_stars(stars, settings)
             
             # Check for beam-alien collisions
-            utils.check_beam_alien_collisions(beams, enemy_wave.aliens, player)
+            collision_handler.check_beam_alien_collisions(
+                game_state_manager.beams, 
+                game_state_manager.enemy_wave.aliens, 
+                game_state_manager.player
+            )
             
             # Check if aliens have reached the bottom
-            if utils.check_aliens_bottom(screen, enemy_wave.aliens, base):
+            if collision_handler.check_aliens_bottom(
+                screen, 
+                game_state_manager.enemy_wave.aliens, 
+                game_state_manager.base
+            ):
                 # Check if base is destroyed
-                if base.health <= 0:
+                if game_state_manager.base.health <= 0:
                     print("Game over - Base destroyed!")
-                    game_state = "game_over"
-                    ui.victory = False
-            
-            # Check if all aliens are destroyed
-            if len(enemy_wave.aliens) == 0:
-                print(f"Wave {enemy_wave.wave_number} completed!")
-                # Start a new wave
-                beams.empty()
-                enemy_wave.spawn_enemies()
-                
-                # Check for victory condition (e.g., after 5 waves)
-                if enemy_wave.wave_number > 5:
-                    print("Victory!")
-                    game_state = "game_over"
-                    ui.victory = True
+                    game_state_manager.end_game(victory=False)
         
         # Update the screen
-        utils.update_screen(settings, screen, player, base, enemy_wave, beams, ui, game_state)
+        renderer.update_screen(
+            settings, 
+            screen, 
+            game_state_manager.player, 
+            game_state_manager.base, 
+            game_state_manager.enemy_wave, 
+            game_state_manager.beams, 
+            ui, 
+            current_state
+        )
+        
+        # Pass victory status to UI
+        ui.victory = game_state_manager.victory
         
         # Control the game speed
         clock.tick(settings.fps)
