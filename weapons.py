@@ -19,7 +19,23 @@ class Beam(Sprite):
         # Store the beam's position as a decimal value
         self.y = float(self.rect.y)
         
-        self.color = settings.player_beam_color
+        # Get damage from player's weapon
+        self.damage = player.weapon.damage if hasattr(player, 'weapon') else 10
+        
+        # Customize color based on weapon level
+        if hasattr(player, 'weapon'):
+            level = player.weapon.level
+            if level <= 1:
+                self.color = settings.player_beam_color  # Green by default
+            elif level == 2:
+                self.color = (0, 200, 255)  # Blue
+            elif level == 3:
+                self.color = (255, 0, 255)  # Purple
+            else:
+                self.color = (255, 215, 0)  # Gold
+        else:
+            self.color = settings.player_beam_color
+            
         self.speed_factor = settings.player_beam_speed
         
     def update(self):
@@ -39,12 +55,26 @@ class Weapon:
         self.settings = settings
         self.level = 1
         self.damage = 10 * self.level
+        self.name = "Basic Laser"
         
     def upgrade(self):
         """Upgrade the weapon to the next level."""
         self.level += 1
         self.damage = 10 * self.level
+        
+        # Update weapon name based on level
+        if self.level == 2:
+            self.name = "Dual Laser"
+        elif self.level == 3:
+            self.name = "Plasma Cannon"
+        elif self.level >= 4:
+            self.name = "Quantum Beam"
+            
         return self.level
+
+    def get_description(self):
+        """Get a description of the weapon."""
+        return f"{self.name} (Level {self.level}) - Damage: {self.damage}"
 
     def attack(self):
         pass  # Logic for weapon attack 

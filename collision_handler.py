@@ -5,7 +5,7 @@ class CollisionHandler:
     """Handles collision detection and resolution in the game."""
     
     @staticmethod
-    def check_beam_alien_collisions(beams, aliens, player):
+    def check_beam_alien_collisions(beams, aliens, resource_manager):
         """Check for collisions between beams and aliens."""
         # Check for any beams that have hit aliens
         # If so, get rid of the beam and the alien
@@ -15,7 +15,8 @@ class CollisionHandler:
         if collisions:
             for aliens_hit in collisions.values():
                 for _ in aliens_hit:  # No need to check health since we're destroying them immediately
-                    player.gems += 50  # Award gems for destroying an alien
+                    # Award gems through resource manager
+                    resource_manager.earn_resources(50)  # Award gems for destroying an alien
                         
         return collisions
 

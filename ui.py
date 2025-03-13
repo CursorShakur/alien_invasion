@@ -34,7 +34,7 @@ class UI:
                 
         return None
         
-    def display(self, game_state, player=None, base=None, wave_number=1):
+    def display(self, game_state, player=None, base=None, wave_number=1, resource_manager=None, game_state_manager=None):
         """Display the appropriate UI based on game state."""
         if game_state == "menu":
             self.show_menu = True
@@ -45,7 +45,7 @@ class UI:
             self.show_menu = False
             self.game_active = True
             self.show_game_over_screen = False
-            self.gameplay_screen.display(player, base, wave_number)
+            self.gameplay_screen.display(player, base, wave_number, resource_manager, game_state_manager)
         elif game_state == "game_over":
             self.show_menu = False
             self.game_active = False

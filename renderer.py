@@ -5,7 +5,7 @@ class Renderer:
     """Handles rendering of game elements to the screen."""
     
     @staticmethod
-    def update_screen(settings, screen, player, base, enemy_wave, beams, ui, game_state):
+    def update_screen(settings, screen, player, base, enemy_wave, beams, ui, game_state, resource_manager=None, game_state_manager=None):
         """Update images on the screen and flip to the new screen."""
         # Fill the screen with the background color
         screen.fill(settings.bg_color)
@@ -24,8 +24,8 @@ class Renderer:
             # Draw all aliens
             enemy_wave.aliens.draw(screen)
         
-        # Draw the UI
-        ui.display(game_state, player, base, enemy_wave.wave_number)
+        # Draw the UI with resource manager and game state manager
+        ui.display(game_state, player, base, enemy_wave.wave_number, resource_manager, game_state_manager)
         
         # Make the most recently drawn screen visible
         pygame.display.flip()

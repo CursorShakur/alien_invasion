@@ -17,14 +17,19 @@ class GameStateManager:
         self.state = "menu"  # Initial state
         
         # Game objects
-        self.player = Player(settings, screen)
+        self.resource_manager = ResourceManager(settings)
+        self.player = Player(settings, screen, self.resource_manager)
         self.base = Base(settings, screen)
         self.enemy_wave = EnemyWave(settings, screen)
-        self.resource_manager = ResourceManager(settings)
         self.beams = Group()
         
         # Game status
         self.victory = False
+        
+        # Upgrade message
+        self.show_upgrade_message = False
+        self.upgrade_message = ""
+        self.message_timer = 0
     
     def get_state(self):
         """Get the current game state."""
@@ -41,15 +46,20 @@ class GameStateManager:
         self.transition_to("playing")
         
         # Reset game objects
-        self.player = Player(self.settings, self.screen)
+        self.resource_manager = ResourceManager(self.settings)
+        self.player = Player(self.settings, self.screen, self.resource_manager)
         self.base = Base(self.settings, self.screen)
         self.enemy_wave = EnemyWave(self.settings, self.screen)
         self.enemy_wave.create_fleet()
-        self.resource_manager = ResourceManager(self.settings)
         self.beams = Group()
         
         # Reset victory status
         self.victory = False
+        
+        # Reset upgrade message
+        self.show_upgrade_message = False
+        self.upgrade_message = ""
+        self.message_timer = 0
     
     def restart_game(self):
         """Restart the game after game over."""
@@ -77,9 +87,21 @@ class GameStateManager:
         # Update aliens
         self.enemy_wave.update()
         
+        # Update upgrade message timer
+        if self.show_upgrade_message:
+            self.message_timer -= 1
+            if self.message_timer <= 0:
+                self.show_upgrade_message = False
+        
         # Check if all aliens are destroyed
         if len(self.enemy_wave.aliens) == 0:
             print(f"Wave {self.enemy_wave.wave_number} completed!")
+            # Award bonus gems for completing wave
+            self.resource_manager.earn_resources(self.enemy_wave.wave_number * 100)
+            
+            # Show wave completion message
+            self.show_message(f"Wave {self.enemy_wave.wave_number} completed! Bonus: {self.enemy_wave.wave_number * 100} gems")
+            
             # Start a new wave
             self.beams.empty()
             self.enemy_wave.spawn_enemies()
@@ -100,5 +122,35 @@ class GameStateManager:
         elif action == "upgrade_defense":
             if self.state == "playing":
                 print("Upgrading defense...")
-                self.base.upgrade_defense(self.resource_manager)
-        return None 
+                if self.base.upgrade_defense(self.resource_manager):
+                    self.show_message(f"Base defense upgraded to level {self.base.defense_level}!")
+                else:
+                    self.show_message("Not enough gems for defense upgrade!")
+        elif action == "upgrade_weapon":
+            if self.state == "playing":
+                print("Upgrading weapon...")
+                if self.player.upgrade_weapon():
+                    self.show_message(f"Weapon upgraded to {self.player.weapon.name}!")
+                else:
+                    self.show_message("Not enough gems for weapon upgrade!")
+        elif action == "upgrade_speed":
+            if self.state == "playing":
+                print("Upgrading speed...")
+                if self.player.upgrade_speed():
+                    self.show_message(f"Speed upgraded to level {self.player.speed_level}!")
+                else:
+                    self.show_message("Not enough gems for speed upgrade!")
+        elif action == "upgrade_fire_rate":
+            if self.state == "playing":
+                print("Upgrading fire rate...")
+                if self.player.upgrade_fire_rate():
+                    self.show_message(f"Fire rate upgraded to level {self.player.fire_rate_level}!")
+                else:
+                    self.show_message("Not enough gems for fire rate upgrade!")
+        return None
+        
+    def show_message(self, message, duration=180):
+        """Show a message on the screen for a duration (in frames)."""
+        self.show_upgrade_message = True
+        self.upgrade_message = message
+        self.message_timer = duration 

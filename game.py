@@ -73,7 +73,7 @@ def run_game():
             collision_handler.check_beam_alien_collisions(
                 game_state_manager.beams, 
                 game_state_manager.enemy_wave.aliens, 
-                game_state_manager.player
+                game_state_manager.resource_manager
             )
             
             # Check if aliens have reached the bottom
@@ -96,7 +96,9 @@ def run_game():
             game_state_manager.enemy_wave, 
             game_state_manager.beams, 
             ui, 
-            current_state
+            current_state,
+            game_state_manager.resource_manager,
+            game_state_manager
         )
         
         # Pass victory status to UI

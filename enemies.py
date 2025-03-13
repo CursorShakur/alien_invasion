@@ -57,8 +57,15 @@ class EnemyWave:
         self.settings = settings
         self.screen = screen
         self.aliens = pygame.sprite.Group()
-        self.wave_number = 1
+        self.wave_number = 0
         self.fleet_direction = 1  # 1 represents right; -1 represents left
+        self.max_rows = 1  # Start with only one row of aliens
+        
+        # Movement pattern variables
+        self.movement_phase = 'sideways'  # 'sideways' or 'down'
+        self.steps_moved = 0
+        self.sideways_steps = 20  # Number of steps to move sideways before changing direction
+        self.down_steps = 5  # Number of steps to move down before moving sideways again
         
     def create_fleet(self):
         """Create a full fleet of aliens."""
@@ -72,7 +79,10 @@ class EnemyWave:
         alien_height = alien.rect.height
         available_space_y = (self.settings.screen_height - 
                             (3 * alien_height))
-        number_rows = available_space_y // (2 * alien_height)
+        max_possible_rows = available_space_y // (2 * alien_height)
+        
+        # Limit the number of rows based on the current wave
+        number_rows = min(self.max_rows, max_possible_rows)
         
         # Create the fleet of aliens
         for row_number in range(number_rows):
@@ -105,16 +115,57 @@ class EnemyWave:
         
     def update(self):
         """Update the positions of all aliens in the fleet."""
-        self.check_fleet_edges()
-        self.aliens.update()
-        
+        if not self.aliens:
+            return
+            
+        # Handle movement based on current phase
+        if self.movement_phase == 'sideways':
+            # Check if aliens have reached the edge of the screen
+            self.check_fleet_edges()
+            
+            # Move aliens sideways
+            for alien in self.aliens.sprites():
+                alien.x += (self.settings.enemy_speed * self.fleet_direction)
+                alien.rect.x = alien.x
+                
+            self.steps_moved += 1
+            
+            # Check if we should change to downward movement
+            if self.steps_moved >= self.sideways_steps:
+                self.movement_phase = 'down'
+                self.steps_moved = 0
+                
+        elif self.movement_phase == 'down':
+            # Move aliens down
+            for alien in self.aliens.sprites():
+                alien.rect.y += self.settings.enemy_drop_speed / 10  # Slower vertical movement
+                
+            self.steps_moved += 1
+            
+            # Check if we should change to sideways movement
+            if self.steps_moved >= self.down_steps:
+                self.movement_phase = 'sideways'
+                self.steps_moved = 0
+                # Change direction after completing vertical movement
+                self.fleet_direction *= -1
+                
     def spawn_enemies(self):
         """Spawn a new wave of enemies."""
         self.wave_number += 1
+        
         # Increase enemy speed slightly with each wave, but cap it
         self.settings.enemy_speed = min(
             self.settings.enemy_speed * 1.1,  # Increase by 10% each wave
             2.0  # Maximum speed cap
         )
+        
+        # Increase the number of rows with each wave, with a reasonable cap
+        if self.wave_number % 2 == 0:  # Add a new row every 2 waves
+            self.max_rows += 1
+        
+        # Reset movement pattern variables
+        self.movement_phase = 'sideways'
+        self.steps_moved = 0
+        
         self.create_fleet()
         return self.wave_number 
